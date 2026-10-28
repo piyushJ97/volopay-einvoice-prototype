@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Volopay e-Invoice (Malaysia) — Prototype</title>
 <style>
@@ -656,6 +657,8 @@ function renderAbout(){
     </ul>
     <h2>Tools &amp; AI use</h2>
     <p>Built with an AI coding assistant (Cursor) from a written spec; field rules were checked against LHDN's published e-Invoice Guideline / SDK documentation and MDEC's accredited-provider list rather than taken from the model's memory. Error codes prefixed <span class="mono">SIM-</span> are intentionally not real LHDN codes to avoid inventing official identifiers.</p>
+    <h2>Links</h2>
+    <p>Live: <a href="https://piyushj97.github.io/volopay-einvoice-prototype/">piyushj97.github.io/volopay-einvoice-prototype</a> · Source: <a href="https://github.com/piyushJ97/volopay-einvoice-prototype">github.com/piyushJ97/volopay-einvoice-prototype</a></p>
     <h2>Known limitations</h2>
     <ul class="steps"><li>No digital signature, no real UBL schema validation, no TIN lookup, no consolidated e-Invoice flow, no credit/debit note flow (type codes exist in the form but behave like invoices).</li><li>Reference lists (classification codes, states) are abbreviated.</li><li>Single supplier, single user, no roles/approvals.</li></ul>`;
 }
