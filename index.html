@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volopay e-Invoice (Malaysia) — Prototype</title>
+<style>
+  :root{
+    --bg:#0f1222; --panel:#161a2e; --panel2:#1c2140; --line:#2a3055; --text:#e8eaf6; --muted:#9aa3c7;
+    --brand:#6c5ce7; --brand2:#a29bfe; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --info:#38bdf8;
+    --radius:12px; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+  a{color:var(--brand2)}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  aside{background:var(--panel);border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .logo .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--info));display:grid;place-items:center;font-weight:800}
+  .logo small{display:block;color:var(--muted);font-size:11px}
+  nav button{display:flex;width:100%;text-align:left;gap:10px;align-items:center;background:none;border:0;color:var(--muted);padding:10px 12px;border-radius:10px;cursor:pointer;font-size:14px}
+  nav button:hover{background:var(--panel2);color:var(--text)}
+  nav button.active{background:var(--panel2);color:var(--text);font-weight:600}
+  .sim-banner{position:sticky;top:0;z-index:5;background:#3b2f00;color:#ffd666;border-bottom:1px solid #6b5600;padding:8px 20px;font-size:12.5px;display:flex;gap:10px;align-items:center}
+  .sim-banner b{background:#ffd666;color:#3b2f00;padding:1px 7px;border-radius:6px;font-size:11px;letter-spacing:.4px}
+  main{padding:0 0 60px}
+  .page{padding:22px 26px;max-width:1180px}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:17px;margin:22px 0 10px}
+  h3{font-size:14px;margin:16px 0 8px;color:var(--brand2);text-transform:uppercase;letter-spacing:.6px}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .card .n{font-size:24px;font-weight:700}
+  .card .l{color:var(--muted);font-size:12px}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;background:var(--panel2)}
+  tr:last-child td{border-bottom:0}
+  tr.row{cursor:pointer} tr.row:hover td{background:#1a1f3a}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid transparent}
+  .pill.Draft{background:#2a3055;color:#c7cdf0}
+  .pill.Submitted{background:#0b3a4f;color:#7dd3fc;border-color:#155e75}
+  .pill.Valid{background:#0b3d25;color:#86efac;border-color:#166534}
+  .pill.Invalid{background:#4a1111;color:#fca5a5;border-color:#7f1d1d}
+  .pill.Cancelled{background:#3a2a00;color:#fcd34d;border-color:#78350f}
+  .pill.Paid{background:#1f1140;color:#d8b4fe;border-color:#581c87}
+  .btn{background:var(--brand);color:#fff;border:0;padding:9px 14px;border-radius:9px;cursor:pointer;font-weight:600;font-size:13.5px}
+  .btn:hover{filter:brightness(1.1)}
+  .btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  .btn.danger{background:#7f1d1d}
+  .btn.ok{background:#166534}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:900px){.app{grid-template-columns:1fr}aside{position:static;height:auto}.grid2,.grid3{grid-template-columns:1fr}}
+  fieldset{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin:0 0 14px;background:var(--panel)}
+  legend{padding:0 8px;color:var(--brand2);font-weight:600;font-size:13px}
+  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+  input,select,textarea{width:100%;background:#0d1024;border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13.5px}
+  input:focus,select:focus{outline:2px solid var(--brand);border-color:transparent}
+  .err input,.err select{border-color:var(--bad);background:#2a0f0f}
+  .errmsg{color:#fca5a5;font-size:12px;margin-top:3px}
+  .hint{color:var(--muted);font-size:11.5px}
+  .lines th,.lines td{padding:6px 8px}
+  .lines input,.lines select{padding:6px 8px;font-size:13px}
+  .totals{display:grid;grid-template-columns:1fr auto;gap:4px 24px;max-width:360px;margin-left:auto;margin-top:10px}
+  .totals .big{font-size:18px;font-weight:700}
+  .alert{border-radius:var(--radius);padding:12px 14px;margin:12px 0;border:1px solid}
+  .alert.bad{background:#2a0f0f;border-color:#7f1d1d;color:#fecaca}
+  .alert.ok{background:#0b2b1a;border-color:#166534;color:#bbf7d0}
+  .alert.info{background:#0b2a3a;border-color:#155e75;color:#bae6fd}
+  .alert.warn{background:#3b2f00;border-color:#78350f;color:#fde68a}
+  .timeline{list-style:none;padding:0;margin:0}
+  .timeline li{display:block;padding:8px 0;border-left:2px solid var(--line);margin-left:10px;padding-left:16px;position:relative}
+  .timeline li::before{content:"";position:absolute;left:-7px;top:14px;width:12px;height:12px;border-radius:50%;background:var(--line)}
+  .timeline li.done::before{background:var(--ok)}
+  .timeline li.bad::before{background:var(--bad)}
+  .timeline li.active::before{background:var(--info);box-shadow:0 0 0 4px rgba(56,189,248,.25)}
+  .timeline .t{color:var(--muted);font-size:11.5px}
+  .tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:5px;background:#3b2f00;color:#ffd666;margin-left:6px;vertical-align:middle;letter-spacing:.3px}
+  .tag.real{background:#0b3d25;color:#86efac}
+  pre{background:#0a0d1c;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font-size:12px;font-family:var(--mono);max-height:360px}
+  .kv{display:grid;grid-template-columns:180px 1fr;gap:6px 14px;font-size:13px}
+  .kv div:nth-child(odd){color:var(--muted)}
+  .qr{width:120px;height:120px;background:
+     repeating-linear-gradient(90deg,#fff 0 6px,transparent 6px 12px),
+     repeating-linear-gradient(0deg,#fff 0 6px,#000 6px 12px);border:6px solid #fff;border-radius:6px;image-rendering:pixelated}
+  .invoice-paper{background:#fff;color:#111;border-radius:10px;padding:22px 26px;font-size:13px}
+  .invoice-paper h2{margin:0 0 4px;color:#111}
+  .invoice-paper table{background:#fff;color:#111;border:1px solid #ddd}
+  .invoice-paper th{background:#f3f4f6;color:#555}
+  .invoice-paper td,.invoice-paper th{border-color:#e5e7eb}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin:10px 0}
+  summary{cursor:pointer;font-weight:600}
+  .mermaid{background:#fff;border-radius:12px;padding:12px;overflow:auto}
+  .steps li{margin:6px 0}
+  footer{color:var(--muted);font-size:12px;padding:18px 26px;border-top:1px solid var(--line)}
+  .toast{position:fixed;right:18px;bottom:18px;background:#1c2140;border:1px solid var(--line);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:360px;z-index:50}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:var(--info);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .muted{color:var(--muted)}
+  .mono{font-family:var(--mono);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="logo">
+      <div class="mark">V</div>
+      <div><div style="font-weight:700">Volopay e-Invoice</div><small>Malaysia · LHDN MyInvois · Prototype</small></div>
+    </div>
+    <nav>
+      <button data-view="dashboard" class="active">📋 Invoices</button>
+      <button data-view="new">➕ New e-Invoice</button>
+      <button data-view="inbox">📥 Received (AP)</button>
+      <button data-view="architecture">🧭 Architecture</button>
+      <button data-view="about">ℹ️ About this prototype</button>
+    </nav>
+    <div style="margin-top:22px;border-top:1px solid var(--line);padding-top:14px">
+      <div class="hint" style="margin-bottom:8px">Reviewer shortcuts</div>
+      <button class="btn secondary" style="width:100%;margin-bottom:8px" onclick="demo.loadRejected()">Load a rejected sample</button>
+      <button class="btn secondary" style="width:100%;margin-bottom:8px" onclick="demo.loadHappy()">Load a valid sample</button>
+      <button class="btn secondary" style="width:100%" onclick="demo.reset()">Reset demo data</button>
+    </div>
+    <div class="hint" style="margin-top:18px">Signed in as<br><b style="color:var(--text)">Aisyah Rahman</b><br>Finance Manager, Nusantara Supplies Sdn Bhd</div>
+  </aside>
+  <main>
+    <div class="sim-banner"><b>SIMULATED</b> No live connection to LHDN MyInvois or any Accredited Service Provider. All submissions, responses, UINs and payments shown here are generated locally in your browser using sample data.</div>
+    <div id="view" class="page"></div>
+    <footer>Prototype built by Piyush Jadhao for the Volopay Founder's Office assignment (Challenge 3). Single-file web app, no backend; state is stored in your browser (localStorage). Field rules are modelled on LHDN's e-Invoice Guideline (v4.x) and are simplified for demonstration. This is not an official LHDN or Volopay product.</footer>
+  </main>
+</div>
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+/* ===================== Reference data (modelled on LHDN e-Invoice Guideline; simplified) ===================== */
+const REF = {
+  invoiceTypes: {"01":"Invoice","02":"Credit Note","03":"Debit Note","04":"Refund Note","11":"Self-billed Invoice","12":"Self-billed Credit Note"},
+  idTypes: {"BRN":"Business Registration No.","NRIC":"NRIC (individual)","PASSPORT":"Passport","ARMY":"Army No."},
+  taxTypes: {"01":"Sales Tax","02":"Service Tax","06":"Not applicable","E":"Tax exemption"},
+  paymentModes: {"01":"Cash","02":"Cheque","03":"Bank Transfer","04":"Credit Card","05":"Debit Card","06":"e-Wallet / Digital Wallet","07":"Others"},
+  classification: {"001":"Breastfeeding equipment","004":"Consolidated e-Invoice","008":"e-Commerce - e-Invoice to buyer / purchaser","022":"Others","023":"Petroleum operations (as defined in Petroleum (Income Tax) Act 1967)","024":"Private retirement scheme or deferred annuity scheme","029":"Repair and maintenance","030":"Research and development","035":"Supporting equipment for disabled person","036":"Voucher, gift card, loyalty points, etc","045":"Self-billed - Others"},
+  currencies: ["MYR","USD","SGD","EUR","GBP","AED","INR","AUD"],
+  states: ["Johor","Kedah","Kelantan","Melaka","Negeri Sembilan","Pahang","Pulau Pinang","Perak","Perlis","Selangor","Terengganu","Sabah","Sarawak","Wilayah Persekutuan Kuala Lumpur","Wilayah Persekutuan Labuan","Wilayah Persekutuan Putrajaya","Not Applicable"]
+};
+const SUPPLIER = {
+  name:"Nusantara Supplies Sdn Bhd", tin:"C25845632000", idType:"BRN", idNo:"202001012345", sst:"W10-1808-32000000",
+  msic:"46510", activity:"Wholesale of computers, computer peripheral equipment and software",
+  address:"Level 12, Menara Prima, Jalan PJU 1/39, Petaling Jaya", city:"Petaling Jaya", postcode:"47301", state:"Selangor", country:"MYS",
+  email:"ar@nusantara-supplies.my", phone:"+60312345678"
+};
+
+/* ===================== Utilities ===================== */
+const $ = s => document.querySelector(s);
+const fmt = n => (Number(n)||0).toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
+const nowIso = () => new Date().toISOString();
+const todayLocal = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+const uid = (n=26) => { const a="ABCDEFGHJKLMNPQRSTUVWXYZ0123456789"; let s=""; for(let i=0;i<n;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; };
+const toast = (msg, ms=2600) => { const t=$("#toast"); t.innerHTML=msg; t.style.display="block"; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display="none", ms); };
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hoursSince = iso => (Date.now()-new Date(iso).getTime())/36e5;
+
+/* ===================== State ===================== */
+const KEY="volopay_einv_my_v1";
+let state = load();
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.invoices) return s; }catch(e){} return seed(); }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+function seed(){
+  const d = h => new Date(Date.now()-h*36e5).toISOString();
+  const inv = (o)=>Object.assign({ id:uid(8), type:"01", currency:"MYR", rate:"", paymentMode:"03", notes:"", events:[], lhdn:null, payment:null, erpSynced:false }, o);
+  const s = { invoices: [
+    inv({ number:"INV-2026-1041", date:d(60).slice(0,10), status:"Valid", buyer:{name:"Petronas Dagangan Berhad", tin:"C20880050010", idType:"BRN", idNo:"198201004569", sst:"", address:"Tower 1, Petronas Twin Towers, KLCC", city:"Kuala Lumpur", postcode:"50088", state:"Wilayah Persekutuan Kuala Lumpur", country:"MYS", email:"ap@petronas.com.my", phone:"+60320515000"},
+      lines:[{cls:"022",desc:"Dell Latitude 5450 laptops (bulk)",qty:20,price:4200,tax:"01",rate:10,disc:0},{cls:"029",desc:"On-site setup & imaging",qty:1,price:3500,tax:"02",rate:8,disc:0}],
+      lhdn:{uuid:"F9D2K3M7P1Q8R4S6T2V5W8X1Y3Z6A9", longId:"K8M2P5R7T1V4W6X9Y2Z5A8B1C3D6E9F2G5H8J1", validatedAt:d(59.7), status:"Valid"}, erpSynced:true,
+      events:[{t:d(60),s:"Draft created from contract #CT-2211 (Volopay AR)",k:"done",real:true},{t:d(59.9),s:"Pre-validation passed (Volopay rules engine)",k:"done",real:true},{t:d(59.8),s:"Transmitted to ASP (Flick Network) — simulated",k:"done"},{t:d(59.7),s:"LHDN MyInvois: VALID — UIN issued (simulated)",k:"done"},{t:d(59.6),s:"Delivered to buyer with Volopay pay-link (Curlec FPX/DuitNow) — simulated",k:"done"},{t:d(40),s:"Synced to Xero as ACCREC invoice — simulated",k:"done"}] }),
+    inv({ number:"INV-2026-1042", date:d(30).slice(0,10), status:"Invalid", buyer:{name:"Sunway Construction Sdn Bhd", tin:"C12345678990", idType:"BRN", idNo:"199301016880", sst:"", address:"Level 3, Menara Sunway, Jalan Lagoon Timur", city:"Bandar Sunway", postcode:"47500", state:"Selangor", country:"MYS", email:"finance@sunwaycon.com", phone:"+60356398889"},
+      lines:[{cls:"022",desc:"Network switches 48-port",qty:6,price:5100,tax:"01",rate:10,disc:0}],
+      lhdn:{status:"Invalid", errors:[{code:"SIM-TIN-404",field:"buyer.tin",msg:"Buyer TIN not found in LHDN taxpayer registry"},{code:"SIM-TIN-BRN-409",field:"buyer.idNo",msg:"Buyer TIN does not match the supplied BRN"}], respondedAt:d(29.9)},
+      events:[{t:d(30),s:"Draft created manually",k:"done",real:true},{t:d(29.95),s:"Pre-validation passed (Volopay rules engine)",k:"done",real:true},{t:d(29.93),s:"Transmitted to ASP (Flick Network) — simulated",k:"done"},{t:d(29.9),s:"LHDN MyInvois: INVALID — 2 errors returned (simulated)",k:"bad"}] }),
+    inv({ number:"INV-2026-1043", date:d(5).slice(0,10), status:"Draft", buyer:{name:"Grab Malaysia Sdn Bhd", tin:"C23456789010", idType:"BRN", idNo:"201201030788", sst:"", address:"Level 10, Menara Southpoint, Mid Valley City", city:"Kuala Lumpur", postcode:"59200", state:"Wilayah Persekutuan Kuala Lumpur", country:"MYS", email:"ap-my@grab.com", phone:"+60327806000"},
+      lines:[{cls:"022",desc:"Barcode scanners",qty:40,price:380,tax:"01",rate:10,disc:200}], events:[{t:d(5),s:"Draft created from contract #CT-2240 (Volopay AR)",k:"done",real:true}] }),
+    inv({ number:"INV-2026-1038", date:d(300).slice(0,10), status:"Paid", buyer:{name:"Maxis Broadband Sdn Bhd", tin:"C34567890120", idType:"BRN", idNo:"199101014867", sst:"", address:"Menara Maxis, KLCC", city:"Kuala Lumpur", postcode:"50088", state:"Wilayah Persekutuan Kuala Lumpur", country:"MYS", email:"ap@maxis.com.my", phone:"+60323307000"},
+      lines:[{cls:"022",desc:"UPS units 3kVA",qty:10,price:2900,tax:"01",rate:10,disc:0}],
+      lhdn:{uuid:"A1B2C3D4E5F6G7H8J9K1L2M3N4P5Q6", longId:"Z9Y8X7W6V5U4T3S2R1Q0P9N8M7L6K5J4H3G2F1E0", validatedAt:d(299.8), status:"Valid"}, erpSynced:true,
+      payment:{method:"DuitNow (via Curlec)", amount:31900, ref:"CRL-7F3A9K", at:d(250), matched:true},
+      events:[{t:d(300),s:"Draft created",k:"done",real:true},{t:d(299.9),s:"Pre-validation passed",k:"done",real:true},{t:d(299.85),s:"Transmitted to ASP (Flick Network) — simulated",k:"done"},{t:d(299.8),s:"LHDN MyInvois: VALID — UIN issued (simulated)",k:"done"},{t:d(250),s:"Payment received MYR 31,900.00 via DuitNow (Curlec webhook) — simulated; auto-matched to invoice",k:"done"},{t:d(249.9),s:"Reconciled & synced to Xero — simulated",k:"done"}] }),
+  ], inbox:[
+    { id:uid(8), supplier:"Flick Network L.L.C (UAE)", country:"ARE", number:"FLK-AE-00912", amount:1850, currency:"USD", received:d(12), kind:"Foreign supplier — self-billed e-Invoice required (type 11)", status:"Action required" },
+    { id:uid(8), supplier:"Telekom Malaysia Berhad", country:"MYS", number:"TM-0099812", amount:2460, currency:"MYR", received:d(50), kind:"Peppol e-Invoice received (validated UIN present)", status:"Approved · scheduled for payment" },
+  ]};
+  localStorage.setItem(KEY, JSON.stringify(s)); return s;
+}
+
+/* ===================== Calculations ===================== */
+function calc(inv){
+  let sub=0, tax=0, disc=0;
+  for(const l of inv.lines||[]){
+    const q=Number(l.qty)||0, p=Number(l.price)||0, d=Number(l.disc)||0;
+    const base=q*p-d; sub+=q*p; disc+=d;
+    const r = (l.tax==="06"||l.tax==="E") ? 0 : (Number(l.rate)||0);
+    tax += base*r/100;
+  }
+  return { sub, disc, tax, total: sub-disc+tax };
+}
+
+/* ===================== Validation (Volopay pre-validation layer — REAL in this prototype) ===================== */
+const TIN_RE = /^(C|D|E|F|IG|J|LE|PT|TA|TC|TN|TP|TR|CS|EI)\d{10,11}$/;
+const SPECIAL_TINS = { "EI00000000010":"General Public (consolidated)", "EI00000000020":"Foreign Buyer", "EI00000000030":"Foreign Supplier", "EI00000000040":"Government / buyer TIN not available" };
+function validate(inv){
+  const e = {};
+  const b = inv.buyer||{};
+  if(!inv.number) e["number"]="Invoice number is required"; else if(!/^[A-Za-z0-9\-\/]{1,50}$/.test(inv.number)) e["number"]="Max 50 chars; letters, digits, - and / only";
+  if(!inv.date) e["date"]="Invoice date is required"; else if(inv.date > todayLocal()) e["date"]="Invoice date cannot be in the future";
+  if(!inv.currency) e["currency"]="Currency is required";
+  if(inv.currency!=="MYR" && !(Number(inv.rate)>0)) e["rate"]="Exchange rate to MYR is mandatory for non-MYR invoices";
+  if(!b.name) e["buyer.name"]="Buyer name is required";
+  if(!b.tin) e["buyer.tin"]="Buyer TIN is required (use EI00000000010 for consolidated / general public)";
+  else if(!TIN_RE.test(b.tin) && !SPECIAL_TINS[b.tin]) e["buyer.tin"]="TIN format looks wrong. Expect prefix (e.g. C, IG) + 10–11 digits, e.g. C20880050010";
+  if(!SPECIAL_TINS[b.tin]){
+    if(!b.idType) e["buyer.idType"]="Registration/ID type required";
+    if(!b.idNo) e["buyer.idNo"]="Registration/ID number required";
+    else if(b.idType==="BRN" && !/^(\d{12}|\d{1,7}[A-Z]?)$/.test(b.idNo)) e["buyer.idNo"]="BRN should be 12 digits (new SSM format, e.g. 202001012345) or old format (e.g. 1234567A)";
+    else if(b.idType==="NRIC" && !/^\d{12}$/.test(b.idNo)) e["buyer.idNo"]="NRIC must be 12 digits";
+    if(!b.address) e["buyer.address"]="Buyer address line is required";
+    if(!b.city) e["buyer.city"]="City is required";
+    if(!b.state) e["buyer.state"]="State is required";
+    if(!b.email && !b.phone) e["buyer.phone"]="Buyer contact number (or email) is required";
+  }
+  if(!inv.lines || !inv.lines.length) e["lines"]="At least one line item is required";
+  (inv.lines||[]).forEach((l,i)=>{
+    if(!/^\d{3}$/.test(l.cls||"")) e[`line.${i}.cls`]="3-digit classification code";
+    if(!l.desc) e[`line.${i}.desc`]="Description required";
+    if(!(Number(l.qty)>0)) e[`line.${i}.qty`]="Qty > 0";
+    if(!(Number(l.price)>=0) || l.price==="") e[`line.${i}.price`]="Unit price required";
+    if(!l.tax) e[`line.${i}.tax`]="Tax type";
+    if((l.tax==="01"||l.tax==="02") && !(Number(l.rate)>0)) e[`line.${i}.rate`]="Rate % required for Sales/Service Tax";
+    if((l.tax==="06"||l.tax==="E") && Number(l.rate)>0) e[`line.${i}.rate`]="Rate must be 0 for N/A or exempt";
+    if(Number(l.disc)>Number(l.qty)*Number(l.price)) e[`line.${i}.disc`]="Discount exceeds line amount";
+  });
+  if(!inv.paymentMode) e["paymentMode"]="Payment mode required";
+  return e;
+}
+
+/* ===================== Simulated ASP + LHDN responses ===================== */
+/* Deterministic rules so reviewers can reproduce an Invalid response:
+   - Buyer TIN ending in "90"  → SIM-TIN-404 (not in registry)
+   - Buyer TIN C12345678990 with BRN 199301016880 → additionally SIM-TIN-BRN-409 (TIN/BRN mismatch)
+   - Invoice number already Valid/Paid → SIM-DUP-409 (duplicate document)
+   - Otherwise → Valid with UIN, long ID, validation link. */
+function simulateLhdn(inv){
+  const errors=[];
+  const dup = state.invoices.find(x=>x.id!==inv.id && x.number===inv.number && ["Valid","Paid","Cancelled"].includes(x.status));
+  if(dup) errors.push({code:"SIM-DUP-409", field:"number", msg:`Duplicate document: an e-Invoice with number ${inv.number} was already validated (UIN ${dup.lhdn?.uuid||"—"})`});
+  if(/90$/.test(inv.buyer.tin)) errors.push({code:"SIM-TIN-404", field:"buyer.tin", msg:"Buyer TIN not found in LHDN taxpayer registry"});
+  if(inv.buyer.tin==="C12345678990" && inv.buyer.idNo==="199301016880") errors.push({code:"SIM-TIN-BRN-409", field:"buyer.idNo", msg:"Buyer TIN does not match the supplied BRN"});
+  if(errors.length) return { status:"Invalid", errors, respondedAt: nowIso() };
+  return { status:"Valid", uuid: uid(26), longId: uid(40), validatedAt: nowIso() };
+}
+async function submit(inv){
+  const steps=[
+    ["Pre-validation passed (Volopay rules engine)","done",true],
+    ["Document assembled as UBL 2.1 JSON (LHDN schema) — simulated","done",false],
+    ["Transmitted to ASP (Flick Network) over API — simulated","done",false],
+    ["ASP forwarded to LHDN MyInvois /documentsubmissions — simulated","done",false],
+  ];
+  inv.status="Submitted"; save(); render();
+  for(const [s,k,real] of steps){ await sleep(650); inv.events.push({t:nowIso(),s,k,real}); save(); render(); }
+  inv.events.push({t:nowIso(),s:"Polling LHDN for validation result — simulated",k:"active"}); save(); render();
+  await sleep(1200);
+  inv.events.pop();
+  const r = simulateLhdn(inv); inv.lhdn=r;
+  if(r.status==="Valid"){ inv.status="Valid"; inv.events.push({t:nowIso(),s:`LHDN MyInvois: VALID — UIN ${r.uuid} issued (simulated)`,k:"done"}); toast("✅ e-Invoice validated by LHDN (simulated)"); }
+  else { inv.status="Invalid"; inv.events.push({t:nowIso(),s:`LHDN MyInvois: INVALID — ${r.errors.length} error(s) returned (simulated)`,k:"bad"}); toast("❌ LHDN rejected the e-Invoice (simulated). Review errors and resubmit."); }
+  save(); render();
+}
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+/* ===================== Views ===================== */
+let view = {name:"dashboard"};
+function go(name, params={}){ view={name,...params}; document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active", b.dataset.view===name || (name==="detail"&&b.dataset.view==="dashboard") || (name==="edit"&&b.dataset.view==="new"))); render(); window.scrollTo(0,0); }
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.view));
+
+function render(){
+  const el=$("#view");
+  if(view.name==="dashboard") el.innerHTML=renderDashboard();
+  else if(view.name==="new"){ if(!view.draft){ view.draft=newDraft(); view.errors={}; view.serverErrors=[]; } el.innerHTML=renderForm(view.draft, view.errors||{}, view.serverErrors||[]); }
+  else if(view.name==="edit") el.innerHTML=renderForm(view.draft, view.errors||{}, view.serverErrors||[]);
+  else if(view.name==="detail") el.innerHTML=renderDetail(state.invoices.find(i=>i.id===view.id));
+  else if(view.name==="inbox") el.innerHTML=renderInbox();
+  else if(view.name==="architecture") el.innerHTML=renderArchitecture();
+  else if(view.name==="about") el.innerHTML=renderAbout();
+  bindForm();
+}
+
+function renderDashboard(){
+  const c = s => state.invoices.filter(i=>i.status===s).length;
+  const outstanding = state.invoices.filter(i=>i.status==="Valid").reduce((a,i)=>a+calc(i).total,0);
+  const rows = state.invoices.slice().sort((a,b)=> (b.date>a.date?1:-1)).map(i=>`
+    <tr class="row" onclick="go('detail',{id:'${i.id}'})">
+      <td class="mono">${esc(i.number)}</td><td>${esc(i.buyer.name)}</td><td>${esc(i.date)}</td>
+      <td>${REF.invoiceTypes[i.type]||i.type}</td><td style="text-align:right">${i.currency} ${fmt(calc(i).total)}</td>
+      <td><span class="pill ${i.status}">${i.status}</span></td>
+      <td class="mono muted">${i.lhdn?.uuid ? i.lhdn.uuid.slice(0,10)+"…" : (i.lhdn?.errors ? i.lhdn.errors.length+" error(s)" : "—")}</td>
+    </tr>`).join("");
+  return `
+    <h1>Invoices</h1><p class="sub">Outbound e-Invoices for <b>${esc(SUPPLIER.name)}</b> (TIN ${SUPPLIER.tin}). Mandated under LHDN e-Invoice (turnover above RM3m) — Volopay issues, validates, delivers and collects.</p>
+    <div class="cards">
+      <div class="card"><div class="n">${state.invoices.length}</div><div class="l">Total documents</div></div>
+      <div class="card"><div class="n" style="color:#86efac">${c("Valid")}</div><div class="l">Validated by LHDN</div></div>
+      <div class="card"><div class="n" style="color:#fca5a5">${c("Invalid")}</div><div class="l">Rejected — action needed</div></div>
+      <div class="card"><div class="n">${c("Draft")}</div><div class="l">Drafts</div></div>
+      <div class="card"><div class="n">MYR ${fmt(outstanding)}</div><div class="l">Validated &amp; awaiting payment</div></div>
+    </div>
+    <div class="toolbar"><button class="btn" onclick="go('new')">➕ New e-Invoice</button><span class="hint">Click a row to view status, LHDN response and timeline.</span></div>
+    <table><thead><tr><th>Number</th><th>Buyer</th><th>Date</th><th>Type</th><th style="text-align:right">Total</th><th>Status</th><th>LHDN UIN / result</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function newDraft(){ return { id:uid(8), number:"INV-2026-"+(1044+state.invoices.length-4), date:todayLocal(), type:"01", currency:"MYR", rate:"", paymentMode:"03", status:"Draft",
+  buyer:{name:"",tin:"",idType:"BRN",idNo:"",sst:"",address:"",city:"",postcode:"",state:"",country:"MYS",email:"",phone:""},
+  lines:[{cls:"022",desc:"",qty:1,price:"",tax:"01",rate:10,disc:0}], events:[], lhdn:null, payment:null, erpSynced:false }; }
+
+function field(label, name, value, errs, opts={}){
+  const err=errs[name]; const id="f_"+name.replace(/\./g,"_");
+  let input;
+  if(opts.select) input=`<select id="${id}" data-name="${name}">${opts.blank?`<option value="">—</option>`:""}${Object.entries(opts.select).map(([k,v])=>`<option value="${k}" ${k==value?"selected":""}>${k}${v?" — "+esc(v):""}</option>`).join("")}</select>`;
+  else input=`<input id="${id}" data-name="${name}" type="${opts.type||"text"}" value="${esc(value)}" placeholder="${esc(opts.ph||"")}" ${opts.ro?"readonly":""}>`;
+  return `<div class="${err?"err":""}"><label for="${id}">${label}${opts.req?" *":""}</label>${input}${err?`<div class="errmsg">⚠ ${esc(err)}</div>`:(opts.hint?`<div class="hint">${opts.hint}</div>`:"")}</div>`;
+}
+
+function renderForm(d, errs, serverErrors){
+  const t=calc(d);
+  const lines = d.lines.map((l,i)=>`
+    <tr>
+      <td class="${errs[`line.${i}.cls`]?"err":""}"><select data-line="${i}" data-k="cls">${Object.entries(REF.classification).map(([k,v])=>`<option value="${k}" ${k===l.cls?"selected":""}>${k} — ${esc(v)}</option>`).join("")}</select></td>
+      <td class="${errs[`line.${i}.desc`]?"err":""}"><input data-line="${i}" data-k="desc" value="${esc(l.desc)}" placeholder="Description"></td>
+      <td class="${errs[`line.${i}.qty`]?"err":""}" style="width:80px"><input data-line="${i}" data-k="qty" type="number" value="${esc(l.qty)}"></td>
+      <td class="${errs[`line.${i}.price`]?"err":""}" style="width:120px"><input data-line="${i}" data-k="price" type="number" step="0.01" value="${esc(l.price)}"></td>
+      <td class="${errs[`line.${i}.tax`]?"err":""}" style="width:150px"><select data-line="${i}" data-k="tax">${Object.entries(REF.taxTypes).map(([k,v])=>`<option value="${k}" ${k===l.tax?"selected":""}>${k} — ${v}</option>`).join("")}</select></td>
+      <td class="${errs[`line.${i}.rate`]?"err":""}" style="width:80px"><input data-line="${i}" data-k="rate" type="number" step="0.01" value="${esc(l.rate)}"></td>
+      <td class="${errs[`line.${i}.disc`]?"err":""}" style="width:100px"><input data-line="${i}" data-k="disc" type="number" step="0.01" value="${esc(l.disc)}"></td>
+      <td style="text-align:right;white-space:nowrap">${fmt((Number(l.qty)||0)*(Number(l.price)||0)-(Number(l.disc)||0))}</td>
+      <td><button class="btn secondary" style="padding:4px 8px" onclick="formCtl.removeLine(${i})">✕</button></td>
+    </tr>`).join("");
+  const lineErrs = Object.keys(errs).filter(k=>k.startsWith("line.")||k==="lines").map(k=>`<li>${esc(errs[k])} <span class="muted">(${k})</span></li>`).join("");
+  const isEdit = view.name==="edit";
+  return `
+    <h1>${isEdit?"Fix & resubmit":"New e-Invoice"} <span class="muted" style="font-size:14px;font-weight:400">· Malaysia (LHDN MyInvois)</span></h1>
+    <p class="sub">Fields marked * are mandatory under the LHDN e-Invoice Guideline. Volopay validates everything client-side before anything is transmitted, so most rejections are caught here, not at LHDN.</p>
+    ${serverErrors.length?`<div class="alert bad"><b>LHDN returned ${serverErrors.length} error(s) on the last submission (simulated):</b><ul style="margin:6px 0 0 18px">${serverErrors.map(e=>`<li><span class="mono">${e.code}</span> — ${esc(e.msg)} <span class="muted">(${e.field})</span></li>`).join("")}</ul><div class="hint" style="margin-top:6px">Fields below are highlighted. Correct them and resubmit; the document number is reused because the original was never validated.</div></div>`:""}
+    ${Object.keys(errs).length?`<div class="alert warn">⚠ ${Object.keys(errs).length} field(s) need attention before submission.</div>`:""}
+    <div class="grid2">
+      <fieldset><legend>Supplier (you)</legend>
+        <div class="kv"><div>Name</div><div>${esc(SUPPLIER.name)}</div><div>TIN</div><div class="mono">${SUPPLIER.tin}</div><div>BRN</div><div class="mono">${SUPPLIER.idNo}</div><div>SST No.</div><div class="mono">${SUPPLIER.sst}</div><div>MSIC</div><div>${SUPPLIER.msic} — ${esc(SUPPLIER.activity)}</div><div>Address</div><div>${esc(SUPPLIER.address)}, ${SUPPLIER.postcode} ${esc(SUPPLIER.state)}</div></div>
+        <div class="hint" style="margin-top:8px">Supplier profile is set once at onboarding and locked (reduces rejections from inconsistent supplier data).</div>
+      </fieldset>
+      <fieldset><legend>Document</legend>
+        <div class="grid2">
+          ${field("e-Invoice type","type",d.type,errs,{select:REF.invoiceTypes,req:true})}
+          ${field("Invoice number","number",d.number,errs,{req:true,hint:"Your internal reference; max 50 chars"})}
+          ${field("Invoice date","date",d.date,errs,{type:"date",req:true})}
+          ${field("Payment mode","paymentMode",d.paymentMode,errs,{select:REF.paymentModes,req:true})}
+          ${field("Currency","currency",d.currency,errs,{select:Object.fromEntries(REF.currencies.map(c=>[c,""])),req:true})}
+          ${field("Exchange rate to MYR","rate",d.rate,errs,{type:"number",hint:"Required only if currency ≠ MYR"})}
+        </div>
+      </fieldset>
+    </div>
+    <fieldset><legend>Buyer</legend>
+      <div class="grid3">
+        ${field("Buyer name","buyer.name",d.buyer.name,errs,{req:true})}
+        ${field("Buyer TIN","buyer.tin",d.buyer.tin,errs,{req:true,ph:"e.g. C20880050010",hint:"Prefix + 10–11 digits. EI00000000010 = general public"})}
+        ${field("SST registration (optional)","buyer.sst",d.buyer.sst,errs,{})}
+        ${field("Registration / ID type","buyer.idType",d.buyer.idType,errs,{select:REF.idTypes,req:true})}
+        ${field("Registration / ID number","buyer.idNo",d.buyer.idNo,errs,{req:true,ph:"e.g. 202001012345"})}
+        ${field("Country","buyer.country",d.buyer.country,errs,{select:{"MYS":"Malaysia","SGP":"Singapore","ARE":"UAE","IND":"India","AUS":"Australia","IDN":"Indonesia"},req:true})}
+        ${field("Address line","buyer.address",d.buyer.address,errs,{req:true})}
+        ${field("City","buyer.city",d.buyer.city,errs,{req:true})}
+        ${field("Postcode","buyer.postcode",d.buyer.postcode,errs,{})}
+        ${field("State","buyer.state",d.buyer.state,errs,{select:Object.fromEntries(REF.states.map(s=>[s,""])),blank:true,req:true})}
+        ${field("Email","buyer.email",d.buyer.email,errs,{type:"email"})}
+        ${field("Contact number","buyer.phone",d.buyer.phone,errs,{req:true,ph:"+60…"})}
+      </div>
+    </fieldset>
+    <fieldset><legend>Line items</legend>
+      ${lineErrs?`<div class="alert warn" style="margin-top:0"><ul style="margin:0 0 0 18px">${lineErrs}</ul></div>`:""}
+      <table class="lines"><thead><tr><th>Classification *</th><th>Description *</th><th>Qty *</th><th>Unit price *</th><th>Tax type *</th><th>Rate %</th><th>Discount</th><th style="text-align:right">Amount</th><th></th></tr></thead><tbody>${lines}</tbody></table>
+      <div class="toolbar"><button class="btn secondary" onclick="formCtl.addLine()">+ Add line</button></div>
+      <div class="totals"><div>Subtotal</div><div style="text-align:right">${d.currency} ${fmt(t.sub)}</div><div>Discounts</div><div style="text-align:right">− ${fmt(t.disc)}</div><div>Tax (SST)</div><div style="text-align:right">${fmt(t.tax)}</div><div class="big">Total payable</div><div class="big" style="text-align:right">${d.currency} ${fmt(t.total)}</div></div>
+    </fieldset>
+    <div class="toolbar">
+      <button class="btn secondary" onclick="formCtl.saveDraft()">Save draft</button>
+      <button class="btn" onclick="formCtl.validateOnly()">Validate fields</button>
+      <button class="btn ok" onclick="formCtl.submit()">Validate &amp; submit to LHDN <span class="tag">simulated</span></button>
+      <button class="btn secondary" onclick="go('dashboard')">Cancel</button>
+    </div>`;
+}
+
+/* form controller */
+const formCtl = {
+  current(){ return view.draft; },
+  readInputs(){
+    const d=view.draft;
+    document.querySelectorAll("#view [data-name]").forEach(el=>{ const n=el.dataset.name; if(n.startsWith("buyer.")) d.buyer[n.slice(6)]=el.value.trim(); else d[n]=el.value.trim(); });
+    document.querySelectorAll("#view [data-line]").forEach(el=>{ d.lines[Number(el.dataset.line)][el.dataset.k]=el.value; });
+    return d;
+  },
+  addLine(){ this.readInputs(); view.draft.lines.push({cls:"022",desc:"",qty:1,price:"",tax:"01",rate:10,disc:0}); render(); },
+  removeLine(i){ this.readInputs(); view.draft.lines.splice(i,1); if(!view.draft.lines.length) view.draft.lines.push({cls:"022",desc:"",qty:1,price:"",tax:"01",rate:10,disc:0}); render(); },
+  persist(d){ const i=state.invoices.findIndex(x=>x.id===d.id); if(i>=0) state.invoices[i]=d; else state.invoices.unshift(d); save(); },
+  saveDraft(){ const d=this.readInputs(); if(!d.events.length) d.events.push({t:nowIso(),s:"Draft created manually",k:"done",real:true}); d.status = d.status==="Invalid"?"Invalid":"Draft"; this.persist(d); toast("Draft saved"); go("detail",{id:d.id}); },
+  validateOnly(){ const d=this.readInputs(); const errs=validate(d); view.errors=errs; render(); toast(Object.keys(errs).length?`⚠ ${Object.keys(errs).length} issue(s) found`:"✅ All mandatory fields valid — ready to submit"); },
+  async submit(){ const d=this.readInputs(); const errs=validate(d); view.errors=errs; if(Object.keys(errs).length){ render(); toast(`⚠ Fix ${Object.keys(errs).length} issue(s) before submitting`); return; }
+    if(!d.events.length) d.events.push({t:nowIso(),s:"Draft created manually",k:"done",real:true});
+    if(d.lhdn?.errors) d.events.push({t:nowIso(),s:"Corrections made by user after LHDN rejection",k:"done",real:true});
+    d.lhdn=null; this.persist(d); go("detail",{id:d.id}); await submit(state.invoices.find(x=>x.id===d.id)); }
+};
+function bindForm(){ document.querySelectorAll("#view [data-line], #view [data-name='currency']").forEach(el=>{ el.onchange=()=>{ formCtl.readInputs(); render(); }; }); }
+
+function renderDetail(inv){
+  if(!inv) return `<div class="alert bad">Invoice not found.</div>`;
+  const t=calc(inv);
+  const canCancel = inv.status==="Valid" && hoursSince(inv.lhdn.validatedAt)<72;
+  const hoursLeft = inv.lhdn?.validatedAt ? Math.max(0,72-hoursSince(inv.lhdn.validatedAt)) : 0;
+  const ev = inv.events.map(e=>`<li class="${e.k}"><div class="t">${new Date(e.t).toLocaleString("en-MY")}</div><div>${e.k==="active"?'<span class="spinner"></span>':""}${esc(e.s)}${e.real?'<span class="tag real">real in prototype</span>':'<span class="tag">simulated</span>'}</div></li>`).join("");
+  const lhdnBlock = !inv.lhdn ? `<div class="alert info">Not yet submitted to LHDN.</div>`
+    : inv.lhdn.status==="Valid" ? `
+      <div class="alert ok"><b>VALID</b> — accepted by LHDN MyInvois <span class="tag">simulated</span>
+        <div class="kv" style="margin-top:8px">
+          <div>UIN (UUID)</div><div class="mono">${inv.lhdn.uuid}</div>
+          <div>Long ID</div><div class="mono" style="word-break:break-all">${inv.lhdn.longId}</div>
+          <div>Validated at</div><div>${new Date(inv.lhdn.validatedAt).toLocaleString("en-MY")}</div>
+          <div>Validation link</div><div class="mono" style="word-break:break-all">https://myinvois.hasil.gov.my/${inv.lhdn.uuid}/share/${inv.lhdn.longId} <span class="hint">(illustrative format; not a real link)</span></div>
+          <div>Cancellation window</div><div>${canCancel?`<b>${hoursLeft.toFixed(1)} h</b> remaining of 72 h`:"Closed (72 h elapsed) — issue a Credit Note instead"}</div>
+        </div></div>`
+    : `<div class="alert bad"><b>INVALID</b> — rejected by LHDN MyInvois <span class="tag">simulated</span>
+        <table style="margin-top:8px"><thead><tr><th>Code</th><th>Field</th><th>Message</th><th>How to resolve</th></tr></thead><tbody>
+        ${inv.lhdn.errors.map(e=>`<tr><td class="mono">${e.code}</td><td class="mono">${e.field}</td><td>${esc(e.msg)}</td><td>${esc(resolveHint(e.code))}</td></tr>`).join("")}</tbody></table>
+        <div class="toolbar" style="margin-bottom:0"><button class="btn" onclick="demo.fix('${inv.id}')">Fix &amp; resubmit</button><button class="btn secondary" onclick="demo.autofix('${inv.id}')">Auto-fix with suggested values (demo)</button></div></div>`;
+  const payBlock = inv.payment ? `<div class="alert ok">💸 Payment received <b>${inv.currency} ${fmt(inv.payment.amount)}</b> via ${esc(inv.payment.method)} · ref <span class="mono">${inv.payment.ref}</span> · ${new Date(inv.payment.at).toLocaleString("en-MY")} · <b>auto-matched</b> to this invoice (exact-match on amount + reference) <span class="tag">simulated</span></div>`
+    : inv.status==="Valid" ? `<div class="toolbar"><button class="btn secondary" onclick="demo.deliver('${inv.id}')">📨 Deliver to buyer with pay-link <span class="tag">simulated</span></button><button class="btn secondary" onclick="demo.pay('${inv.id}')">💳 Simulate buyer paying via DuitNow/FPX (Curlec)</button>${inv.erpSynced?`<span class="pill Valid">Synced to Xero</span>`:`<button class="btn secondary" onclick="demo.erp('${inv.id}')">🔄 Sync to Xero <span class="tag">simulated</span></button>`}${canCancel?`<button class="btn danger" onclick="demo.cancel('${inv.id}')">Cancel e-Invoice (72h window)</button>`:""}</div>` : "";
+  return `
+    <div class="toolbar" style="margin-top:0"><button class="btn secondary" onclick="go('dashboard')">← Back</button></div>
+    <h1>${esc(inv.number)} <span class="pill ${inv.status}" style="vertical-align:middle;margin-left:8px">${inv.status}</span></h1>
+    <p class="sub">${REF.invoiceTypes[inv.type]} · ${esc(inv.buyer.name)} · ${inv.date} · <b>${inv.currency} ${fmt(t.total)}</b></p>
+    ${inv.status==="Draft"?`<div class="toolbar"><button class="btn" onclick="demo.edit('${inv.id}')">Edit &amp; submit</button></div>`:""}
+    <div class="grid2">
+      <div>
+        <h3>LHDN result</h3>${lhdnBlock}
+        <h3>Collections &amp; reconciliation</h3>${payBlock||`<div class="hint">Available once the e-Invoice is validated.</div>`}
+        <h3>Document</h3>
+        <div class="invoice-paper">
+          <div style="display:flex;justify-content:space-between;gap:16px">
+            <div><h2>e-Invoice</h2><div class="muted" style="color:#555">${esc(inv.number)} · ${inv.date}</div><div style="margin-top:8px"><b>${esc(SUPPLIER.name)}</b><br>TIN ${SUPPLIER.tin} · BRN ${SUPPLIER.idNo}<br>${esc(SUPPLIER.address)}</div></div>
+            <div style="text-align:right">${inv.lhdn?.uuid?`<div class="qr" style="display:inline-block"></div><div style="font-size:10px;color:#555">QR → LHDN validation link<br>(placeholder)</div>`:`<div style="font-size:11px;color:#999;border:1px dashed #ccc;padding:10px;border-radius:6px">QR code appears after<br>LHDN validation</div>`}</div>
+          </div>
+          <div style="margin:10px 0"><b>Bill to:</b> ${esc(inv.buyer.name)} · TIN ${esc(inv.buyer.tin)} · ${esc(inv.buyer.idType)} ${esc(inv.buyer.idNo)}<br>${esc(inv.buyer.address)}, ${esc(inv.buyer.postcode)} ${esc(inv.buyer.city)}, ${esc(inv.buyer.state)}</div>
+          <table><thead><tr><th>Class.</th><th>Description</th><th>Qty</th><th>Unit</th><th>Tax</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${inv.lines.map(l=>`<tr><td>${l.cls}</td><td>${esc(l.desc)}</td><td>${l.qty}</td><td>${fmt(l.price)}</td><td>${l.tax}${(l.tax==="01"||l.tax==="02")?" @ "+l.rate+"%":""}</td><td style="text-align:right">${fmt((Number(l.qty)||0)*(Number(l.price)||0)-(Number(l.disc)||0))}</td></tr>`).join("")}
+          </tbody></table>
+          <div class="totals" style="color:#111"><div>Subtotal</div><div style="text-align:right">${fmt(t.sub)}</div><div>Discount</div><div style="text-align:right">− ${fmt(t.disc)}</div><div>SST</div><div style="text-align:right">${fmt(t.tax)}</div><div class="big">Total</div><div class="big" style="text-align:right">${inv.currency} ${fmt(t.total)}</div></div>
+          ${inv.lhdn?.uuid?`<div style="font-size:11px;color:#555;margin-top:8px">LHDN UIN: ${inv.lhdn.uuid} · Validated ${new Date(inv.lhdn.validatedAt).toLocaleString("en-MY")}</div>`:""}
+        </div>
+      </div>
+      <div>
+        <h3>Timeline</h3><ul class="timeline">${ev||"<li><div></div><div class='muted'>No events yet</div></li>"}</ul>
+        <h3>Payloads</h3>
+        <details><summary>Request → ASP (UBL 2.1 JSON, LHDN schema) <span class="tag">simulated</span></summary><pre>${esc(JSON.stringify(toUbl(inv),null,2))}</pre></details>
+        <details><summary>Response ← LHDN (via ASP) <span class="tag">simulated</span></summary><pre>${esc(JSON.stringify(inv.lhdn||{note:"not submitted yet"},null,2))}</pre></details>
+      </div>
+    </div>`;
+}
+function resolveHint(code){ return ({
+  "SIM-TIN-404":"Ask the buyer for the TIN shown on their LHDN MyTax profile, or use the MyInvois 'Validate TIN' lookup (ASP exposes this as an API). Do not guess.",
+  "SIM-TIN-BRN-409":"TIN and BRN belong to different entities — usually a subsidiary vs. holding company mix-up. Confirm the exact legal entity being billed.",
+  "SIM-DUP-409":"Use a new invoice number. If the earlier document was wrong, cancel it within 72 h or issue a Credit Note."
+})[code]||"Correct the field and resubmit."; }
+
+function toUbl(inv){ const t=calc(inv); return {
+  _meta:{ channel:"Volopay → Flick Network (ASP) → LHDN MyInvois", note:"Illustrative structure. Real submissions use LHDN's UBL 2.1 JSON/XML schema with a digital signature applied by the ASP." },
+  Invoice:[{ ID:[{_:inv.number}], IssueDate:[{_:inv.date}], InvoiceTypeCode:[{_:inv.type, listVersionID:"1.0"}], DocumentCurrencyCode:[{_:inv.currency}],
+    AccountingSupplierParty:[{Party:[{PartyIdentification:[{ID:[{_:SUPPLIER.tin,schemeID:"TIN"}]},{ID:[{_:SUPPLIER.idNo,schemeID:"BRN"}]},{ID:[{_:SUPPLIER.sst,schemeID:"SST"}]}], IndustryClassificationCode:[{_:SUPPLIER.msic,name:SUPPLIER.activity}], PartyLegalEntity:[{RegistrationName:[{_:SUPPLIER.name}]}]}]}],
+    AccountingCustomerParty:[{Party:[{PartyIdentification:[{ID:[{_:inv.buyer.tin,schemeID:"TIN"}]},{ID:[{_:inv.buyer.idNo,schemeID:inv.buyer.idType}]}], PartyLegalEntity:[{RegistrationName:[{_:inv.buyer.name}]}], PostalAddress:[{CityName:[{_:inv.buyer.city}],PostalZone:[{_:inv.buyer.postcode}],CountrySubentityCode:[{_:inv.buyer.state}],AddressLine:[{Line:[{_:inv.buyer.address}]}],Country:[{IdentificationCode:[{_:inv.buyer.country}]}]}], Contact:[{Telephone:[{_:inv.buyer.phone}],ElectronicMail:[{_:inv.buyer.email}]}]}]}],
+    PaymentMeans:[{PaymentMeansCode:[{_:inv.paymentMode}]}],
+    TaxTotal:[{TaxAmount:[{_:+t.tax.toFixed(2),currencyID:inv.currency}]}],
+    LegalMonetaryTotal:[{LineExtensionAmount:[{_:+t.sub.toFixed(2)}],AllowanceTotalAmount:[{_:+t.disc.toFixed(2)}],TaxInclusiveAmount:[{_:+t.total.toFixed(2)}],PayableAmount:[{_:+t.total.toFixed(2),currencyID:inv.currency}]}],
+    InvoiceLine: inv.lines.map((l,i)=>({ID:[{_:String(i+1)}],InvoicedQuantity:[{_:+l.qty}],LineExtensionAmount:[{_:+((l.qty*l.price)-(l.disc||0)).toFixed(2)}],Item:[{Description:[{_:l.desc}],CommodityClassification:[{ItemClassificationCode:[{_:l.cls,listID:"CLASS"}]}]}],Price:[{PriceAmount:[{_:+l.price}]}],TaxTotal:[{TaxSubtotal:[{TaxCategory:[{ID:[{_:l.tax}],Percent:[{_:+l.rate||0}]}]}]}]}))
+  }]}; }
+
+function renderInbox(){
+  return `
+    <h1>Received e-Invoices (Accounts Payable)</h1>
+    <p class="sub">Inbound side of the same product. Malaysian buyers must issue <b>self-billed e-Invoices</b> for foreign suppliers — Volopay already executes the cross-border vendor payment, so it can generate the self-billed document at payment time.</p>
+    <table><thead><tr><th>Supplier</th><th>Doc no.</th><th>Amount</th><th>Received</th><th>Kind</th><th>Status</th><th></th></tr></thead><tbody>
+    ${state.inbox.map(i=>`<tr><td>${esc(i.supplier)}</td><td class="mono">${esc(i.number)}</td><td>${i.currency} ${fmt(i.amount)}</td><td>${new Date(i.received).toLocaleDateString("en-MY")}</td><td>${esc(i.kind)}</td><td>${esc(i.status)}</td><td>${i.country!=="MYS"&&i.status==="Action required"?`<button class="btn secondary" onclick="demo.selfBill('${i.id}')">Generate self-billed e-Invoice</button>`:""}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="alert info" style="margin-top:16px">Proposed for production (not built here): Peppol inbox via the ASP so validated supplier e-Invoices land directly in Volopay AP, 3-way matched against POs, routed through Volopay's existing multi-level approvals and paid on Volopay rails.</div>`;
+}
+
+function renderArchitecture(){
+  return `
+    <h1>Architecture</h1>
+    <p class="sub">What was built for this prototype versus what is proposed for production. Green = real in this prototype; amber = simulated/proposed.</p>
+    <div class="diagram" style="background:#fff;border-radius:12px;padding:8px"><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="640" style="max-width:100%;height:auto" viewBox="0 0 1180 640" font-family="-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif" font-size="12">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+    <style>
+      .box{stroke-width:1.5}
+      .build{fill:#dcfce7;stroke:#166534}
+      .sim{fill:#fef3c7;stroke:#b45309}
+      .ext{fill:#e0f2fe;stroke:#0369a1}
+      .t{fill:#111827;text-anchor:middle}
+      .tt{font-weight:700}
+      .lbl{fill:#374151;font-size:11px}
+      .grp{fill:none;stroke:#9ca3af;stroke-dasharray:6 4}
+      .gl{fill:#6b7280;font-size:11.5px;font-weight:700;letter-spacing:.4px}
+      .ln{stroke:#374151;stroke-width:1.4;fill:none;marker-end:url(#a)}
+    </style>
+  </defs>
+  <rect width="1180" height="640" fill="#ffffff"/>
+
+  <!-- groups -->
+  <rect class="grp" x="250" y="30" width="440" height="545" rx="10"/>
+  <text class="gl" x="260" y="48">VOLOPAY PLATFORM — BUILD</text>
+  <rect class="grp" x="705" y="30" width="465" height="545" rx="10"/>
+  <text class="gl" x="715" y="48">PARTNERS — BUY  ·  TAX AUTHORITY  ·  NETWORK</text>
+
+  <!-- Column A -->
+  <rect class="box build" x="20" y="60" width="200" height="90" rx="8"/>
+  <text class="t tt" x="120" y="92">Finance user</text>
+  <text class="t" x="120" y="110">Volopay web UI</text>
+  <text class="t" x="120" y="126">create · validate · submit · status</text>
+
+  <rect class="box ext" x="20" y="470" width="200" height="90" rx="8"/>
+  <text class="t tt" x="120" y="502">Customer ERP</text>
+  <text class="t" x="120" y="520">Xero · NetSuite · QuickBooks</text>
+  <text class="t" x="120" y="536">SQL Account · AutoCount (MY)</text>
+
+  <!-- Column B1 -->
+  <rect class="box sim" x="270" y="60" width="190" height="70" rx="8"/>
+  <text class="t tt" x="365" y="90">Invoice service (API)</text>
+  <text class="t" x="365" y="108">canonical invoice model</text>
+
+  <rect class="box sim" x="270" y="200" width="190" height="70" rx="8"/>
+  <text class="t tt" x="365" y="228">Submission queue</text>
+  <text class="t" x="365" y="246">submit · webhook · poll · retry</text>
+
+  <rect class="box build" x="270" y="340" width="190" height="70" rx="8"/>
+  <text class="t tt" x="365" y="368">Database</text>
+  <text class="t" x="365" y="386">invoices · events · UINs</text>
+
+  <rect class="box sim" x="270" y="480" width="190" height="70" rx="8"/>
+  <text class="t tt" x="365" y="508">Volopay AR</text>
+  <text class="t" x="365" y="526">pay-links · cash application</text>
+
+  <!-- Column B2 -->
+  <rect class="box build" x="490" y="60" width="185" height="70" rx="8"/>
+  <text class="t tt" x="582" y="84">Country rules engine</text>
+  <text class="t" x="582" y="100">MY: TIN · BRN · MSIC · class codes</text>
+  <text class="t" x="582" y="116">SST · FX rate · 72h window</text>
+
+  <!-- Column C -->
+  <rect class="box sim" x="725" y="190" width="220" height="90" rx="8"/>
+  <text class="t tt" x="835" y="218">Flick Network</text>
+  <text class="t" x="835" y="234">Accredited Service Provider (MDEC / FTA)</text>
+  <text class="t" x="835" y="252">UBL 2.1 mapping · digital signature</text>
+  <text class="t" x="835" y="268">submission · TIN lookup · Peppol AP</text>
+
+  <rect class="box sim" x="725" y="340" width="220" height="60" rx="8"/>
+  <text class="t tt" x="835" y="365">CapBay</text>
+  <text class="t" x="835" y="383">invoice financing on validated invoices</text>
+
+  <rect class="box sim" x="725" y="480" width="220" height="70" rx="8"/>
+  <text class="t tt" x="835" y="508">Curlec by Razorpay</text>
+  <text class="t" x="835" y="526">FPX · DuitNow · payment links</text>
+
+  <!-- Column D -->
+  <rect class="box ext" x="990" y="150" width="170" height="80" rx="8"/>
+  <text class="t tt" x="1075" y="180">LHDN MyInvois</text>
+  <text class="t" x="1075" y="198">validate · UIN · QR</text>
+  <text class="t" x="1075" y="214">72h cancellation</text>
+
+  <rect class="box ext" x="990" y="270" width="170" height="80" rx="8"/>
+  <text class="t tt" x="1075" y="300">Peppol network</text>
+  <text class="t" x="1075" y="318">(MDEC) → buyer's</text>
+  <text class="t" x="1075" y="334">AP system / email+PDF</text>
+
+  <rect class="box ext" x="990" y="480" width="170" height="70" rx="8"/>
+  <text class="t tt" x="1075" y="508">Buyer</text>
+  <text class="t" x="1075" y="526">pays via FPX / DuitNow</text>
+
+  <!-- arrows -->
+  <path class="ln" d="M220,105 L270,105"/><text class="lbl" x="226" y="98">1 draft</text>
+  <path class="ln" d="M460,95 L490,95"/><text class="lbl" x="446" y="142">pre-validate →</text>
+  <path class="ln" d="M365,130 L365,200"/><text class="lbl" x="372" y="170">2 enqueue (only if valid)</text>
+  <path class="ln" d="M460,228 L725,228"/><text class="lbl" x="540" y="221">3 submit invoice JSON</text>
+  <path class="ln" d="M725,258 L460,258"/><text class="lbl" x="520" y="276">6 webhook: Valid / Invalid + errors</text>
+  <path class="ln" d="M945,205 L990,205"/><text class="lbl" x="948" y="196">4 signed UBL</text>
+  <path class="ln" d="M990,222 L945,222"/><text class="lbl" x="948" y="240">5 UIN / errors</text>
+  <path class="ln" d="M945,268 L990,300"/><text class="lbl" x="944" y="292">8 deliver</text>
+  <path class="ln" d="M365,270 L365,340"/><text class="lbl" x="372" y="310">store result + events</text>
+  <path class="ln" d="M270,375 L120,375 L120,150"/><text class="lbl" x="128" y="250">7 status · errors</text><text class="lbl" x="128" y="264">mapped to fields · UIN · QR</text>
+  <path class="ln" d="M270,398 L170,398 L170,470"/><text class="lbl" x="178" y="440">12 sync invoice</text><text class="lbl" x="178" y="454">+ UIN + payment</text>
+  <path class="ln" d="M365,410 L365,480"/><text class="lbl" x="372" y="450">matched payment</text>
+  <path class="ln" d="M460,505 L725,505"/><text class="lbl" x="540" y="498">9 pay-link on validated invoice</text>
+  <path class="ln" d="M725,535 L460,535"/><text class="lbl" x="545" y="553">10 payment webhook → auto-match</text>
+  <path class="ln" d="M945,515 L990,515"/>
+  <path class="ln" d="M460,490 L725,375"/><text class="lbl" x="560" y="420">11 validated receivable → financing</text>
+
+  <!-- legend -->
+  <rect class="box build" x="20" y="595" width="16" height="16" rx="3"/><text class="lbl" x="42" y="607">Built and working in this prototype</text>
+  <rect class="box sim" x="260" y="595" width="16" height="16" rx="3"/><text class="lbl" x="282" y="607">Simulated in prototype · Volopay builds (left) or partner provides (right) in production</text>
+  <rect class="box ext" x="800" y="595" width="16" height="16" rx="3"/><text class="lbl" x="822" y="607">External systems (tax authority, network, customer ERP, buyer)</text>
+</svg></div>
+    <h2>How data moves</h2>
+    <ol class="steps">
+      <li><b>Create.</b> Finance user drafts an invoice (or Volopay AR creates it from a contract). Supplier profile is locked from onboarding.</li>
+      <li><b>Validate (Volopay).</b> The country rules engine checks mandatory fields and formats (TIN prefix + digits, 12-digit BRN, 5-digit MSIC, 3-digit classification, SST rates, FX rate if non-MYR) <i>before</i> transmission. This is where most rejections should be caught.</li>
+      <li><b>Submit (ASP).</b> The invoice service enqueues a submission job. Flick Network maps to LHDN's UBL 2.1 JSON, applies the digital signature, and calls MyInvois. Volopay never has to hold the signing certificate or chase schema changes.</li>
+      <li><b>Result (LHDN).</b> LHDN returns Valid (UIN + long ID + validation link, 72-hour cancellation window) or Invalid (error list). The ASP notifies Volopay by webhook; a poller is the fallback.</li>
+      <li><b>Status back to user.</b> Errors are mapped to the exact form field with a plain-language fix. Validated invoices get a QR code and are delivered to the buyer via Peppol or email with an embedded Curlec pay-link.</li>
+      <li><b>Collect &amp; reconcile.</b> Payment webhooks from Curlec are matched to the UIN/amount in Volopay AR; the ERP receives the invoice, UIN and payment status.</li>
+      <li><b>Finance (optional).</b> A LHDN-validated invoice is a verified receivable; Volopay can offer CapBay invoice financing against it in-flow.</li>
+    </ol>
+    <h2>Built vs. proposed</h2>
+    <table><thead><tr><th>Component</th><th>In this prototype</th><th>Production proposal</th></tr></thead><tbody>
+      <tr><td>Web UI (create, validate, submit, status, fix &amp; resubmit, cancel, AP inbox)</td><td><span class="pill Valid">Built</span> single-file HTML/JS</td><td>Inside Volopay's existing web app and mobile app; roles &amp; approvals reuse current RBAC</td></tr>
+      <tr><td>Country rules engine (MY field validation)</td><td><span class="pill Valid">Built</span> client-side, ~25 rules</td><td>Server-side, versioned per LHDN guideline release; shared with UAE (PINT AE) rule set</td></tr>
+      <tr><td>Persistence</td><td><span class="pill Valid">Built</span> browser localStorage</td><td>Postgres; append-only event log for audit (7-year retention)</td></tr>
+      <tr><td>UBL 2.1 document assembly</td><td><span class="pill Submitted">Illustrative</span> JSON shape shown</td><td>Generated server-side from canonical invoice model; ASP validates against LHDN schema</td></tr>
+      <tr><td>ASP integration (Flick Network)</td><td><span class="pill Cancelled">Simulated</span> deterministic responses</td><td>REST + webhooks; sandbox first; TIN lookup API used at buyer onboarding</td></tr>
+      <tr><td>LHDN MyInvois validation, UIN, QR, 72h cancel</td><td><span class="pill Cancelled">Simulated</span></td><td>Via ASP; QR encodes validation link; cancellation &amp; credit-note flows</td></tr>
+      <tr><td>Peppol delivery to buyer</td><td><span class="pill Cancelled">Simulated</span></td><td>Via ASP's MDEC-accredited access point; email + PDF fallback</td></tr>
+      <tr><td>Pay-link &amp; payment matching (Curlec)</td><td><span class="pill Cancelled">Simulated</span></td><td>Curlec payment links/FPX/DuitNow; webhook → Volopay AR cash application</td></tr>
+      <tr><td>ERP sync (Xero etc.)</td><td><span class="pill Cancelled">Simulated</span> log entry only</td><td>Reuse Volopay's existing Xero/QuickBooks/NetSuite/Zoho connectors; add SQL Account &amp; AutoCount for Malaysia</td></tr>
+      <tr><td>Invoice financing (CapBay)</td><td>Not built</td><td>Offer on validated invoices; CapBay underwrites against buyer credit</td></tr>
+    </tbody></table>`;
+}
+
+function renderAbout(){
+  return `
+    <h1>About this prototype</h1>
+    <p class="sub">Challenge 3 of the Volopay Founder's Office assignment — turning the Challenge 1 recommendation (Malaysia + UAE, build on an accredited e-invoicing partner) into a working flow for Malaysia.</p>
+    <h2>Suggested 2-minute review path</h2>
+    <ol class="steps">
+      <li>Open <b>INV-2026-1042</b> (status Invalid) → see the two LHDN errors with field mapping and resolution hints.</li>
+      <li>Click <b>Fix &amp; resubmit</b> → the form opens with the failing fields highlighted. Correct the TIN to <span class="mono">C12345678900</span> and BRN to <span class="mono">199301016881</span> (or use "Auto-fix") → submit → watch the timeline → <b>Valid</b> with UIN.</li>
+      <li>On the validated invoice, click <b>Deliver with pay-link</b> and then <b>Simulate buyer paying</b> → payment is auto-matched and reconciled.</li>
+      <li>Try <b>New e-Invoice</b> and submit with a blank buyer TIN or a non-MYR currency without FX rate → Volopay's pre-validation blocks it before anything is sent.</li>
+      <li>To force a fresh LHDN rejection, use a buyer TIN ending in <span class="mono">90</span> (e.g. C11111111190), or reuse the number of an already-validated invoice (duplicate).</li>
+    </ol>
+    <h2>What is real vs. simulated</h2>
+    <ul class="steps">
+      <li><b>Real:</b> the UI, the Malaysia field-validation rules engine, totals/SST math, status machine (Draft → Submitted → Valid/Invalid → Cancelled/Paid), 72-hour cancellation logic, event timeline, local persistence.</li>
+      <li><b>Simulated:</b> every external hop — ASP transmission, LHDN validation (UIN/long ID/QR), Peppol delivery, Curlec payment webhooks, Xero sync. Responses are generated by deterministic rules described on the Architecture page.</li>
+    </ul>
+    <h2>Tools &amp; AI use</h2>
+    <p>Built with an AI coding assistant (Cursor) from a written spec; field rules were checked against LHDN's published e-Invoice Guideline / SDK documentation and MDEC's accredited-provider list rather than taken from the model's memory. Error codes prefixed <span class="mono">SIM-</span> are intentionally not real LHDN codes to avoid inventing official identifiers.</p>
+    <h2>Known limitations</h2>
+    <ul class="steps"><li>No digital signature, no real UBL schema validation, no TIN lookup, no consolidated e-Invoice flow, no credit/debit note flow (type codes exist in the form but behave like invoices).</li><li>Reference lists (classification codes, states) are abbreviated.</li><li>Single supplier, single user, no roles/approvals.</li></ul>`;
+}
+
+/* ===================== Demo actions ===================== */
+const demo = {
+  edit(id){ const inv=state.invoices.find(i=>i.id===id); view={name:"edit",draft:JSON.parse(JSON.stringify(inv)),errors:{},serverErrors:[]}; render(); window.scrollTo(0,0); },
+  fix(id){ const inv=state.invoices.find(i=>i.id===id); const errs={}; (inv.lhdn?.errors||[]).forEach(e=>errs[e.field]=e.msg); view={name:"edit",draft:JSON.parse(JSON.stringify(inv)),errors:errs,serverErrors:inv.lhdn?.errors||[]}; document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view==="new")); render(); window.scrollTo(0,0); },
+  async autofix(id){ const inv=state.invoices.find(i=>i.id===id); inv.buyer.tin=inv.buyer.tin.replace(/90$/,"00"); if(inv.buyer.idNo==="199301016880") inv.buyer.idNo="199301016881"; inv.events.push({t:nowIso(),s:"Corrections applied (TIN/BRN) after LHDN rejection",k:"done",real:true}); inv.lhdn=null; save(); go("detail",{id}); await submit(inv); },
+  async deliver(id){ const inv=state.invoices.find(i=>i.id===id); inv.events.push({t:nowIso(),s:`Delivered to ${inv.buyer.email||"buyer"} via Peppol + email with Volopay pay-link (Curlec) — simulated`,k:"done"}); save(); render(); toast("📨 Delivered with pay-link (simulated)"); },
+  async pay(id){ const inv=state.invoices.find(i=>i.id===id); const t=calc(inv); inv.events.push({t:nowIso(),s:"Buyer opened pay-link and paid via DuitNow — simulated",k:"active"}); save(); render(); await sleep(1200); inv.events.pop(); inv.payment={method:"DuitNow (via Curlec)",amount:+t.total.toFixed(2),ref:"CRL-"+uid(6),at:nowIso(),matched:true}; inv.status="Paid"; inv.events.push({t:nowIso(),s:`Payment webhook received: ${inv.currency} ${fmt(t.total)} ref ${inv.payment.ref} — simulated; exact-match to UIN → reconciled`,k:"done"}); if(!inv.erpSynced){ inv.erpSynced=true; inv.events.push({t:nowIso(),s:"Invoice + payment synced to Xero — simulated",k:"done"}); } save(); render(); toast("💸 Payment matched and reconciled (simulated)"); },
+  erp(id){ const inv=state.invoices.find(i=>i.id===id); inv.erpSynced=true; inv.events.push({t:nowIso(),s:"Synced to Xero as ACCREC invoice with LHDN UIN in reference — simulated",k:"done"}); save(); render(); toast("🔄 Synced to Xero (simulated)"); },
+  cancel(id){ const inv=state.invoices.find(i=>i.id===id); const reason=prompt("Cancellation reason (sent to LHDN):","Wrong buyer entity"); if(reason===null) return; inv.status="Cancelled"; inv.events.push({t:nowIso(),s:`Cancelled within 72h window — reason: "${reason}" — LHDN acknowledged (simulated)`,k:"done"}); save(); render(); toast("Cancelled (simulated)"); },
+  selfBill(id){ const item=state.inbox.find(i=>i.id===id); const d=newDraft(); d.type="11"; d.number="SB-2026-"+(100+state.invoices.length); d.currency=item.currency; d.rate= item.currency==="USD"?"4.21":""; d.buyer={name:item.supplier,tin:"EI00000000030",idType:"BRN",idNo:"",sst:"",address:"Dubai Internet City",city:"Dubai",postcode:"",state:"Not Applicable",country:"ARE",email:"",phone:"+971569775833"}; d.lines=[{cls:"045",desc:`e-Invoicing API subscription — ${item.number}`,qty:1,price:item.amount,tax:"06",rate:0,disc:0}]; d.events=[{t:nowIso(),s:`Self-billed draft generated from AP bill ${item.number} (foreign supplier) — Volopay AP`,k:"done",real:true}]; item.status="Self-billed draft created"; save(); view={name:"new",draft:d,errors:{},serverErrors:[]}; render(); toast("Self-billed e-Invoice (type 11) drafted from the AP bill"); },
+  loadRejected(){ const inv=state.invoices.find(i=>i.status==="Invalid"); if(inv) go("detail",{id:inv.id}); else toast("No rejected invoice in current data — reset demo data first"); },
+  loadHappy(){ const d=newDraft(); d.buyer={name:"Sime Darby Property Berhad",tin:"C45678901230",idType:"BRN",idNo:"197301002148",sst:"",address:"Block G, No. 2, Jalan PJU 1A/7A, Ara Damansara",city:"Petaling Jaya",postcode:"47301",state:"Selangor",country:"MYS",email:"ap@simedarbyproperty.com",phone:"+60378495000"}; d.lines=[{cls:"022",desc:"Access control hardware",qty:12,price:1850,tax:"01",rate:10,disc:0},{cls:"029",desc:"Installation & commissioning",qty:1,price:6000,tax:"02",rate:8,disc:500}]; view={name:"new",draft:d,errors:{},serverErrors:[]}; document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view==="new")); render(); toast("Valid sample loaded — click 'Validate & submit'"); },
+  reset(){ if(confirm("Reset all demo data?")){ localStorage.removeItem(KEY); state=seed(); go("dashboard"); toast("Demo data reset"); } }
+};
+
+render();
+</script>
+</body>
+</html>
